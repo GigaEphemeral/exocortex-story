@@ -141,6 +141,10 @@ SceneController = {
 8. 终幕世界层：`worldFade` 从 1 → 0 时，人物（human.js）与书桌/书籍/电脑（材质表）一起淡出，
    场景灯光压暗；`brain` 状态 `worldFade = 0`，画面只剩高密度电子点大脑与冷光。
    反向滚动时沿同一参数路径恢复，不退化为“突然出现”。
+9. 连线系统只有一套持久化 `LineSegments`，分基础层与增密层（`aTier`）：
+   `linkDensity` 只控制增密层的显隐（冲突/再巩固阶段更密集），不重建几何；
+   `linkDecay` 按每条连接的 `aDecaySeed` 让其先变灰、再淡出（遗忘阶段与终幕
+   “部分连线消失后显现脑形”）。两者都是扁平标量，正反向沿同一插值路径。
 
 ```js
 // three.js —— Three.js 加载器（顶层 await）
