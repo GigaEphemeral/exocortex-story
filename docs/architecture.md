@@ -135,6 +135,9 @@ SceneController = {
 6. 资源统一登记（resource registry），`dispose()` 批量释放；`degrade()` 可重复调用无副作用。
 7. 人物、书桌、书籍、电脑、粒子、网络、大脑共用同一个 Scene / Camera / Renderer，
    不通过销毁重建场景伪造连续变形。
+8. 终幕世界层：`worldFade` 从 1 → 0 时，人物（human.js）与书桌/书籍/电脑（材质表）一起淡出，
+   场景灯光压暗；`brain` 状态 `worldFade = 0`，画面只剩高密度电子点大脑与冷光。
+   反向滚动时沿同一参数路径恢复，不退化为“突然出现”。
 
 ```js
 // three.js —— Three.js 加载器（顶层 await）

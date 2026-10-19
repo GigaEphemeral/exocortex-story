@@ -6,6 +6,9 @@ node_modules/
 # 下载的第三方运行时（用 npm run vendor 重新生成）
 vendor/
 
+# 部署说明（本地文档，按需求不提交）
+depoly.md
+
 # 构建 / 产物 / 日志
 dist/
 coverage/
