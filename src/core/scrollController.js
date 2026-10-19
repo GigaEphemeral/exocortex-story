@@ -3,6 +3,8 @@ const WHEEL_IDLE_RESET_MS = 200;
 const TOUCH_STEP_THRESHOLD = 48;
 const TOUCH_AXIS_RATIO = 1.15;
 const TRANSITION_TAIL_GUARD_MS = 160;
+// 研究卡片到达文字底部/顶部后，再累计约一格滚轮（100px）才切换章节。
+const PANEL_EDGE_PASSTHROUGH = 100;
 
 const PANEL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ']);
 
@@ -14,7 +16,8 @@ const PANEL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ']);
  * 2. 方向翻转时清空反向累计；
  * 3. 过渡进行中忽略滚轮/触摸输入，只允许状态机缓存一个按钮方向；
  * 4. 过渡刚结束的 160ms 内忽略残余惯性；
- * 5. 卡片仍可滚动时，滚轮优先交给卡片（原生滚动），不切章。
+ * 5. 卡片仍可滚动时，滚轮优先交给卡片（原生滚动），不切章；
+ * 6. 卡片到达文字底部/顶部后，再累计约一格滚轮（100px）才切章，避免刚读完就跳章。
  *
  * 本模块不修改场景状态，只调用 onStep；章节状态由 chapterMachine 唯一管理。
  */
@@ -30,6 +33,8 @@ export function createScrollController({
 
   let wheelAccumulator = 0;
   let wheelLastAt = 0;
+  // 卡片端点处的“冗余”滚轮累计：到文字底部后还需要继续滚动一点才切章。
+  let panelEdgeAccumulator = 0;
   let wasBusy = false;
   let guardUntil = 0;
   /** @type {{ x: number, y: number } | null} */
@@ -70,7 +75,10 @@ export function createScrollController({
     syncTransitionTail();
 
     // 卡片内部仍有滚动空间时，滚轮优先给卡片，交给浏览器原生滚动。
-    if (event.target && canScrollCard(direction, event.target)) return;
+    if (event.target && canScrollCard(direction, event.target)) {
+      panelEdgeAccumulator = 0;
+      return;
+    }
 
     event.preventDefault();
 
@@ -81,6 +89,26 @@ export function createScrollController({
     }
 
     const timestamp = now();
+
+    // 卡片已到达文字底部/顶部：累计冗余滚轮量，越过阈值才切换章节。
+    // 这条路径独立于过渡尾部锁，保证“读完最后一行还要再滚一点”的体感稳定。
+    const panelScrollable = Boolean(
+      panelElement && panelElement.scrollHeight - panelElement.clientHeight > 1,
+    );
+    const insidePanel = Boolean(
+      panelScrollable && event.target instanceof view.Node && panelElement.contains(event.target),
+    );
+    if (insidePanel) {
+      // 只按方向累计，不做时间窗口重置：慢速滚动/低帧率设备也能稳定达到阈值。
+      if (panelEdgeAccumulator !== 0 && Math.sign(panelEdgeAccumulator) !== Math.sign(delta)) {
+        panelEdgeAccumulator = 0;
+      }
+      panelEdgeAccumulator += delta;
+      if (Math.abs(panelEdgeAccumulator) < PANEL_EDGE_PASSTHROUGH) return;
+      panelEdgeAccumulator = 0;
+      step(direction, 'wheel');
+      return;
+    }
 
     // 过渡刚结束的短窗口内，只接受一次明显的滚轮动作，过滤触控板惯性残余。
     // （残余惯性通常是小 delta 连续流；新的滚轮动作一般单次 delta 更大。）
@@ -184,6 +212,7 @@ export function createScrollController({
   function resetInput() {
     wheelAccumulator = 0;
     wheelLastAt = 0;
+    panelEdgeAccumulator = 0;
     resetTouch();
     wasBusy = busy();
     guardUntil = 0;
