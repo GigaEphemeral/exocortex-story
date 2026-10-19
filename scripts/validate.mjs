@@ -168,7 +168,8 @@ check('每阶段文案字段完整', () => {
     assert.ok(isNonEmptyString(item.title), `stage ${item.stage}: title`);
     assert.ok(isNonEmptyString(item.question), `stage ${item.stage}: question`);
     assert.ok(isNonEmptyString(item.diff), `stage ${item.stage}: diff`);
-    assert.ok(isNonEmptyString(item.open), `stage ${item.stage}: open`);
+    assert.ok(Array.isArray(item.open) && item.open.length >= 2, `stage ${item.stage}: 待验证问题至少 2 条`);
+    for (const question of item.open) assert.ok(isNonEmptyString(question), `stage ${item.stage}: open 条目`);
     assert.ok(item.brain.length >= 2, `stage ${item.stage}: brain`);
     assert.ok(item.ai.length >= 2, `stage ${item.stage}: ai`);
     assert.ok(item.tags.length >= 1 && item.tags.length <= 8, `stage ${item.stage}: 词云关键词 1–8 个`);
@@ -188,6 +189,20 @@ check('论文数据严守法务边界：verifiedUrl 全部为 null，不编造�
       assert.equal(paper.verifiedUrl, null, `stage ${item.stage}: verifiedUrl 必须为 null`);
       assert.ok(!Object.hasOwn(paper, 'url'), `stage ${item.stage}: 不允许额外的 url 字段`);
       assert.ok(!/^https?:\/\//i.test(paper.verifiedUrl ?? ''), `stage ${item.stage}: 不允许链接`);
+    }
+  }
+});
+
+check('前沿研究方向外链均为合法的 https 地址（避免 javascript: 等注入）', () => {
+  for (const item of researchData) {
+    assert.ok(Array.isArray(item.frontier) && item.frontier.length >= 1, `stage ${item.stage}: 至少一条前沿链接`);
+    for (const link of item.frontier) {
+      assert.ok(isNonEmptyString(link.title), `stage ${item.stage}: frontier.title`);
+      assert.ok(isNonEmptyString(link.note), `stage ${item.stage}: frontier.note`);
+      assert.ok(Number.isInteger(link.year), `stage ${item.stage}: frontier.year`);
+      const url = new URL(link.url);
+      assert.equal(url.protocol, 'https:', `stage ${item.stage}: 外链必须是 https`);
+      assert.ok(url.hostname.endsWith('arxiv.org'), `stage ${item.stage}: 外链应指向 arXiv 摘要页`);
     }
   }
 });

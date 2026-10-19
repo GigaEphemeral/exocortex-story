@@ -9,6 +9,7 @@
     "dev": "node scripts/serve.mjs",
     "vendor": "node scripts/vendor-three.mjs",
     "validate": "node scripts/validate.mjs",
+    "check-links": "node scripts/check-links.mjs",
     "test": "node scripts/validate.mjs && node scripts/test-machine.mjs"
   },
   "engines": {

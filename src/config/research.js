@@ -13,7 +13,9 @@
  * - question：核心研究问题；brain：人脑相关机制；ai：工程对应；
  * - diff：人脑与 AI 的关键差异；tags：词云关键词（≤8 个）；
  * - papers：代表性研究（authors / year / title / venue / note / verifiedUrl）；
- * - open：当前仍然待解决的问题。
+ * - open：当前仍然待解决的问题数组（首条为章节核心问题，其余为工程实现层面的难点）；
+ * - frontier：前沿研究方向的外部阅读链接（title / year / url / note）。这里的外链只代表
+ *   研究方向，不用于支撑卡片结论；论文列表的 verifiedUrl 规则保持不变（仍全部为 null）。
  */
 
 /** @typedef {{ authors: string, year: number, title: string, venue: string, note: string, verifiedUrl: string | null }} Paper */
@@ -31,7 +33,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Baddeley & Hitch', year: 1974, title: 'Working Memory', venue: 'Psychology of Learning and Motivation, 8, 47–89', note: '工作记忆的多成分模型', verifiedUrl: null }),
       Object.freeze({ authors: 'Dehaene et al.', year: 2005, title: 'The neural basis of reading', venue: '出处待核验', note: '阅读的神经基础', verifiedUrl: null }),
     ]),
-    open: '哪些输入特征决定信息值得被长期保留？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'A Survey of Context Engineering for Large Language Models',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2507.13334',
+        note: '上下文工程的系统综述：输入组织、检索与工具调用的统一工程视角',
+      }),
+      Object.freeze({
+        title: 'Lost in the Middle: How Language Models Use Long Contexts',
+        year: 2023,
+        url: 'https://arxiv.org/abs/2307.03172',
+        note: '长上下文中信息位置对使用效果影响的经典实证研究',
+      }),
+    ]),
+    open: Object.freeze([
+      '哪些输入特征决定信息值得被长期保留？',
+      '超长上下文下，注意力/检索预算如何在延迟、成本与信息完整性之间取得可验证的平衡？',
+      '多模态输入（文档、表格、图像、语音）如何统一编码，并保持跨模态引用的一致性与可追溯性？',
+      '输入侧的噪声过滤与去重，如何避免误删低频但关键的信息？',
+    ]),
   }),
   Object.freeze({
     stage: 1,
@@ -45,7 +66,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Squire', year: 1992, title: 'Memory and the hippocampus: A synthesis from findings with rats, monkeys, and humans', venue: 'Psychological Review, 99(2), 195–231', note: '海马体与陈述性记忆', verifiedUrl: null }),
       Object.freeze({ authors: 'Eichenbaum', year: 2000, title: 'A cortical-hippocampal system for declarative memory', venue: 'Nature Reviews Neuroscience, 1, 41–50', note: '皮层-海马陈述性记忆系统', verifiedUrl: null }),
     ]),
-    open: '如何在保留原始证据的同时生成可检索、可更新的知识表征？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'A-MEM: Agentic Memory for LLM Agents',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2502.12110',
+        note: '面向智能体的结构化记忆写入、组织与动态演化',
+      }),
+      Object.freeze({
+        title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2504.19413',
+        note: '生产级长期记忆架构：抽取、合并、检索与成本权衡',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何在保留原始证据的同时生成可检索、可更新的知识表征？',
+      '记忆写入的粒度（原文 / 分块 / 摘要 / 事实）如何选择，才能同时满足召回率与存储成本？',
+      '多用户、多租户场景下，记忆的隔离、权限与可审计删除如何设计？',
+      '写入时的语义去重与版本合并，如何避免把不同语境下的同一事实错误合并？',
+    ]),
   }),
   Object.freeze({
     stage: 2,
@@ -59,7 +99,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Marr', year: 1971, title: 'Simple memory: A theory for archicortex', venue: 'Phil. Trans. R. Soc. B, 262(841), 23–81', note: '海马计算理论', verifiedUrl: null }),
       Object.freeze({ authors: 'Yassa & Stark', year: 2011, title: 'Pattern separation in the hippocampus', venue: 'Trends in Neurosciences, 34(10), 515–525', note: '模式分离综述', verifiedUrl: null }),
     ]),
-    open: '如何同时识别语义相关性与事实差异，避免把相似内容合并成错误结论？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2405.14831',
+        note: '受海马记忆机制启发的长期记忆编码与模式补全式检索',
+      }),
+      Object.freeze({
+        title: 'LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2410.10813',
+        note: '长期交互记忆的区分、更新与时间推理评测基准',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何同时识别语义相关性与事实差异，避免把相似内容合并成错误结论？',
+      '高维嵌入空间中的相似度阈值如何随领域与时间自适应，而不是全局固定？',
+      '当检索召回高度相似但相互矛盾的多条记忆时，如何做可解释的区分与取舍？',
+      '负样本构造与对比学习，如何在长尾实体和罕见事实上保持判别力？',
+    ]),
   }),
   Object.freeze({
     stage: 3,
@@ -73,7 +132,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'McClelland, McNaughton & O\'Reilly', year: 1995, title: 'Why there are complementary learning systems in the hippocampus and neocortex', venue: 'Psychological Review, 102(3), 419–457', note: '互补学习系统理论', verifiedUrl: null }),
       Object.freeze({ authors: 'Kumaran, Hassabis & McClelland', year: 2016, title: 'What Learning Systems do Intelligent Agents Need?', venue: 'Trends in Cognitive Sciences, 20(7), 512–534', note: 'CLS 理论更新', verifiedUrl: null }),
     ]),
-    open: '如何在抽象出一般规律的同时保留例外、原始证据和时间信息？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2401.18059',
+        note: '递归摘要构建树状知识结构，兼顾细粒度证据与高层抽象',
+      }),
+      Object.freeze({
+        title: 'From Local to Global: A Graph RAG Approach to Query-Focused Summarization',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2404.16130',
+        note: '图结构与社区摘要支持跨文档的全局整合式问答',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何在抽象出一般规律的同时保留例外、原始证据和时间信息？',
+      '图结构/层级结构的知识组织，在增量更新时如何避免全量重建与“图漂移”？',
+      '摘要与聚合过程如何做到可追溯：每条抽象结论都能回溯到原始证据链？',
+      '知识整合的“压缩率—保真度”权衡，如何用下游任务指标而非直觉来评估？',
+    ]),
   }),
   Object.freeze({
     stage: 4,
@@ -87,7 +165,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Lewis et al.', year: 2020, title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks', venue: 'NeurIPS 2020, arXiv:2005.11401', note: 'RAG 原始论文', verifiedUrl: null }),
       Object.freeze({ authors: 'Karpukhin et al.', year: 2020, title: 'Dense Passage Retrieval for Open-Domain Question Answering', venue: 'EMNLP 2020, arXiv:2004.04906', note: '稠密段落检索', verifiedUrl: null }),
     ]),
-    open: '如何让原始证据、摘要、事实、来源与知识关系保持一致并可追溯？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'Retrieval-Augmented Generation for Large Language Models: A Survey',
+        year: 2023,
+        url: 'https://arxiv.org/abs/2312.10997',
+        note: 'RAG 全链路工程组件综述：分块、索引、检索与生成',
+      }),
+      Object.freeze({
+        title: 'MemOS: An Operating System for Memory-Augmented Generation (MAG) in Large Language Models',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2505.22101',
+        note: '把记忆作为可调度资源的分层记忆操作系统架构',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何让原始证据、摘要、事实、来源与知识关系保持一致并可追溯？',
+      '向量索引、倒排索引与图索引的混合检索，如何在延迟预算内完成路由与融合？',
+      '数据分块策略（固定窗口 / 语义分块 / 递归分块）如何随文档类型自动选择？',
+      '存储层的版本、元数据与血缘（lineage）如何支持回溯到任意历史快照？',
+    ]),
   }),
   Object.freeze({
     stage: 5,
@@ -101,7 +198,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Tulving & Thomson', year: 1973, title: 'Encoding specificity and retrieval processes in episodic memory', venue: 'Psychological Review, 80(5), 352–373', note: '编码特异性原则', verifiedUrl: null }),
       Object.freeze({ authors: 'Lewis et al.', year: 2020, title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks', venue: 'NeurIPS 2020, arXiv:2005.11401', note: 'RAG 原始论文（此处侧重检索与生成链路）', verifiedUrl: null }),
     ]),
-    open: '怎样判断生成内容是有证据支持的回忆、合理推断，还是无依据的补全？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2501.09136',
+        note: '智能体化检索：规划、工具调用、迭代检索与结果自检的系统综述',
+      }),
+      Object.freeze({
+        title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2503.09516',
+        note: '用强化学习训练“推理—搜索”交替策略，减少无效检索',
+      }),
+    ]),
+    open: Object.freeze([
+      '怎样判断生成内容是有证据支持的回忆、合理推断，还是无依据的补全？',
+      '多跳检索中，如何控制查询改写与重排带来的误差累积和成本增长？',
+      '检索增强生成如何给出可核验的引用粒度（句级 / 段级 / 来源级），并在来源缺失时明确拒答？',
+      '没有人工标注时，如何在线评估检索质量，发现“看似相关但无用”的片段？',
+    ]),
   }),
   Object.freeze({
     stage: 6,
@@ -115,7 +231,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Wilson & McNaughton', year: 1994, title: 'Reactivation of hippocampal ensemble memories during sleep', venue: 'Science, 265(5172), 676–679', note: '睡眠中海马序列重放', verifiedUrl: null }),
       Object.freeze({ authors: 'Mnih et al.', year: 2015, title: 'Human-level control through deep reinforcement learning', venue: 'Nature, 518, 529–533', note: '经验回放机制', verifiedUrl: null }),
     ]),
-    open: '如何评估后台整合是否真的改善了长期记忆，而不是仅仅产生更多摘要？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'Sleep-time Compute: Beyond Inference Scaling at Test-time',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2504.13171',
+        note: '把“离线思考/预处理”作为可调度的算力预算',
+      }),
+      Object.freeze({
+        title: 'Titans: Learning to Memorize at Test Time',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2501.00663',
+        note: '测试时持续写入与更新长期记忆的模型架构探索',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何评估后台整合是否真的改善了长期记忆，而不是仅仅产生更多摘要？',
+      '离线巩固的计算预算（何时触发、整合多少、保留哪些证据）如何调度与计量？',
+      '持续学习中如何避免“总结漂移”和灾难性遗忘：增量巩固与全量重训如何取舍？',
+      '如何度量巩固收益在跨会话、跨任务上的迁移，而不是只在单一 benchmark 上提升？',
+    ]),
   }),
   Object.freeze({
     stage: 7,
@@ -129,7 +264,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Nader, Schafe & LeDoux', year: 2000, title: 'Fear memories require protein synthesis in the amygdala for reconsolidation after retrieval', venue: 'Nature, 406, 722–726', note: '再巩固需要蛋白质合成', verifiedUrl: null }),
       Object.freeze({ authors: 'Lee, Nader & Schiller', year: 2017, title: 'An update on memory reconsolidation updating', venue: 'Trends in Cognitive Sciences, 21(7), 531–545', note: '再巩固更新综述', verifiedUrl: null }),
     ]),
-    open: '当新旧信息冲突时，如何保留证据历史并避免覆盖真实但少见的事实？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'ConflictBank: A Benchmark for Evaluating the Influence of Knowledge Conflicts in LLMs',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2408.12076',
+        note: '系统构造知识冲突场景，评测模型对冲突信息的处理',
+      }),
+      Object.freeze({
+        title: 'Knowledge Editing for Large Language Models: A Survey',
+        year: 2023,
+        url: 'https://arxiv.org/abs/2310.16218',
+        note: '知识编辑的方法、边界与副作用综述',
+      }),
+    ]),
+    open: Object.freeze([
+      '当新旧信息冲突时，如何保留证据历史并避免覆盖真实但少见的事实？',
+      '冲突检测的置信度如何校准，才能区分“来源不可靠”与“事实确实被更新”？',
+      '知识编辑如何做到局部更新不外溢、可回滚、并可审计？',
+      '多源冲突下，版本控制与来源优先级策略如何复现与验证？',
+    ]),
   }),
   Object.freeze({
     stage: 8,
@@ -143,7 +297,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Anderson & Green', year: 2001, title: 'Suppressing unwanted memories by executive control', venue: 'Nature, 410, 366–369', note: '执行控制抑制记忆', verifiedUrl: null }),
       Object.freeze({ authors: 'Anderson et al.', year: 2004, title: 'Neural systems underlying the suppression of unwanted memories', venue: 'Science, 303(5655), 232–235', note: '记忆抑制的神经基础', verifiedUrl: null }),
     ]),
-    open: '如何让外置记忆主动淘汰低价值信息，同时保留重要例外和审计记录？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'A Comprehensive Survey of Machine Unlearning Techniques for Large Language Models',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2503.01854',
+        note: 'LLM 机器遗忘的方法分类、工程难点与评估挑战',
+      }),
+      Object.freeze({
+        title: 'Eight Methods to Evaluate Robust Unlearning in LLMs',
+        year: 2024,
+        url: 'https://arxiv.org/abs/2402.16835',
+        note: '从多个角度检验“声称遗忘”是否真的稳健',
+      }),
+    ]),
+    open: Object.freeze([
+      '如何让外置记忆主动淘汰低价值信息，同时保留重要例外和审计记录？',
+      '隐私/合规删除如何做到跨索引、跨缓存、跨备份的彻底遗忘，并给出可检验的证明？',
+      '重要性/时效性评分如何在线学习，避免把低频但高价值的信息误删？',
+      '归档、压缩与删除的边界：如何设计可逆的“弱化”机制而不是不可逆丢失？',
+    ]),
   }),
   Object.freeze({
     stage: 9,
@@ -157,7 +330,26 @@ export const researchData = Object.freeze([
       Object.freeze({ authors: 'Park et al.', year: 2023, title: 'Generative Agents: Interactive Simulacra of Human Behavior', venue: 'arXiv:2304.03442', note: '生成式智能体记忆流', verifiedUrl: null }),
       Object.freeze({ authors: 'Packer et al.', year: 2023, title: 'MemGPT: Towards LLMs as Operating Systems', venue: 'arXiv:2310.08560', note: '分层记忆管理', verifiedUrl: null }),
     ]),
-    open: '什么样的评估体系能够衡量 AI 外置知识系统的长期可靠性、可追溯性、纠错能力和遗忘质量？',
+    frontier: Object.freeze([
+      Object.freeze({
+        title: 'Memory in the Age of AI Agents',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2512.13564',
+        note: '智能体记忆的系统综述：形态、功能、演化与开放问题',
+      }),
+      Object.freeze({
+        title: 'From Human Memory to AI Memory: A Survey on Memory Mechanisms in the Era of LLMs',
+        year: 2025,
+        url: 'https://arxiv.org/abs/2504.15965',
+        note: '人脑记忆机制与 LLM 记忆机制的系统对照',
+      }),
+    ]),
+    open: Object.freeze([
+      '什么样的评估体系能够衡量 AI 外置知识系统的长期可靠性、可追溯性、纠错能力和遗忘质量？',
+      '多个记忆模块（工作记忆 / 情景记忆 / 语义记忆）之间如何统一调度与冲突仲裁？',
+      '长期运行下的成本、延迟与能耗如何纳入系统级评估，而不只看答案准确率？',
+      '如何构建可复现的“记忆演化”长周期基准，覆盖更新、遗忘、冲突与审计全链路？',
+    ]),
   }),
 ]);
 
