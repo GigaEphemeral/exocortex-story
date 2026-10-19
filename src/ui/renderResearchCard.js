@@ -418,13 +418,5 @@ export function renderVisualNote({ chapter = null, index = 0, total = 14, fallba
   callout.append(el('p', 'visual-note__note', unit.visualNote || '镜头沿平滑路径移动，不改变学术阶段。'));
   root.append(callout);
 
-  root.append(
-    el(
-      'p',
-      'visual-note__hint',
-      '本单元是独立的视觉过渡，不新增学术研究卡片；章节编号与整体进度仍按全部 14 个内容单元计算。',
-    ),
-  );
-
   return root;
 }
