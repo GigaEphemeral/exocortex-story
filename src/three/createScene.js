@@ -205,6 +205,8 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     screenDetail: DEFAULT_VALUES.screenDetail,
     brainGlow: DEFAULT_VALUES.brainGlow,
     worldFade: DEFAULT_VALUES.worldFade,
+    linkDensity: DEFAULT_VALUES.linkDensity,
+    linkDecay: DEFAULT_VALUES.linkDecay,
   };
 
   let cssWidth = 1;
@@ -294,6 +296,8 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     values.screenDetail = interpolate(from, to, 'screenDetail', t, DEFAULT_VALUES.screenDetail);
     values.brainGlow = interpolate(from, to, 'brainGlow', t, DEFAULT_VALUES.brainGlow);
     values.worldFade = interpolate(from, to, 'worldFade', t, DEFAULT_VALUES.worldFade);
+    values.linkDensity = interpolate(from, to, 'linkDensity', t, DEFAULT_VALUES.linkDensity);
+    values.linkDecay = interpolate(from, to, 'linkDecay', t, DEFAULT_VALUES.linkDecay);
 
     const layoutFrom = typeof from.layout === 'string' ? from.layout : DEFAULT_VALUES.layout;
     const layoutTo = typeof to.layout === 'string' ? to.layout : DEFAULT_VALUES.layout;
@@ -338,7 +342,15 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     computer.update(values.screenPower, values.screenDetail, elapsed, reduced);
     applyWorldFade(values.worldFade);
     particles.update(layoutFrom, layoutTo, t, values, elapsed);
-    connections.update(particles.positions, values.linkOpacity, values.linkWidth, values.coolBlend, elapsed);
+    connections.update(
+      particles.positions,
+      values.linkOpacity,
+      values.linkWidth,
+      values.coolBlend,
+      elapsed,
+      values.linkDensity,
+      values.linkDecay
+    );
     brainHalo.update(values.brainGlow, values.coolBlend, elapsed, reduced, camera);
   }
 
@@ -376,6 +388,9 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
       textures: renderer.info.memory.textures,
       drawCalls: renderer.info.render.calls,
       worldFade: values.worldFade,
+      linkDensity: values.linkDensity,
+      linkDecay: values.linkDecay,
+      linkCount: connections.linkCount,
       threeSource,
     };
   }

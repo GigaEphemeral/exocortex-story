@@ -145,6 +145,8 @@ export const DEFAULT_VALUES = Object.freeze({
   screenDetail: 0,
   brainGlow: 0,
   worldFade: 1,
+  linkDensity: 0.08,
+  linkDecay: 0,
 });
 
 /**
@@ -184,4 +186,6 @@ export const SCALAR_KEYS = Object.freeze([
   'screenDetail',
   'brainGlow',
   'worldFade',
+  'linkDensity',
+  'linkDecay',
 ]);

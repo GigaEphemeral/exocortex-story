@@ -12,15 +12,32 @@ const VERTEX_SHADER = `
   attribute float aKind;
   attribute float aStrength;
   attribute float aPhase;
+  attribute float aTier;
+  attribute float aDecaySeed;
+
+  uniform float uDensity;
+  uniform float uDecay;
 
   varying float vKind;
   varying float vStrength;
   varying float vPhase;
+  varying float vTier;
+  varying float vGray;
+  varying float vGone;
 
   void main() {
     vKind = aKind;
     vStrength = aStrength;
     vPhase = aPhase;
+
+    // 增密层：uDensity=0 时只保留基础近邻连线，=1 时额外连线全部显示。
+    vTier = mix(1.0, uDensity, aTier);
+
+    // 每条连接有独立的遗忘阈值：uDecay 增大时先变灰，再逐渐消失。
+    float threshold = mix(0.08, 0.82, aDecaySeed);
+    vGray = smoothstep(threshold, threshold + 0.12, uDecay);
+    vGone = smoothstep(threshold + 0.1, threshold + 0.3, uDecay);
+
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -33,18 +50,24 @@ const FRAGMENT_SHADER = `
   uniform float uMotion;
   uniform vec3 uConceptColor;
   uniform vec3 uEvidenceColor;
+  uniform vec3 uGrayColor;
 
   varying float vKind;
   varying float vStrength;
   varying float vPhase;
+  varying float vTier;
+  varying float vGray;
+  varying float vGone;
 
   void main() {
     vec3 color = mix(uEvidenceColor, uConceptColor, clamp(vKind, 0.0, 1.0));
     color = mix(color, uConceptColor, uCoolBlend * (1.0 - vKind) * 0.5);
+    // 遗忘：相关连接先褪成灰色，再淡出消失。
+    color = mix(color, uGrayColor, clamp(vGray, 0.0, 1.0));
     // linkWidth 只改材质参数：影响亮度/可见强度（WebGL 线宽上限通常为 1px）。
     float widthBoost = mix(0.72, 1.3, smoothstep(0.72, 1.55, uWidth));
     float pulse = 0.9 + 0.1 * sin(uTime * 1.4 + vPhase * 6.2831853) * uMotion;
-    float alpha = uOpacity * vStrength * widthBoost * pulse * 0.8;
+    float alpha = uOpacity * vStrength * widthBoost * pulse * 0.8 * vTier * (1.0 - vGone);
     if (alpha < 0.004) discard;
     gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));
   }
@@ -83,11 +106,12 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
 
   const pairIndices = [];
   const pairStrengths = [];
+  const pairTiers = [];
   const usedPairs = new Set();
   const candidateIndex = new Int32Array(8);
   const candidateDistance = new Float32Array(8);
 
-  const tryAddPair = (a, b, strength) => {
+  const tryAddPair = (a, b, strength, tier = 0) => {
     if (a === b) return false;
     const low = a < b ? a : b;
     const high = a < b ? b : a;
@@ -96,13 +120,16 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
     usedPairs.add(key);
     pairIndices.push(low, high);
     pairStrengths.push(strength);
+    pairTiers.push(tier);
     return true;
   };
 
-  for (let i = 0; i < count && pairStrengths.length < maxLinks; i += 1) {
-    const x = networkPositions[i * 3];
-    const y = networkPositions[i * 3 + 1];
-    const z = networkPositions[i * 3 + 2];
+  /** 把 index 附近最近的候选写入 candidateIndex / candidateDistance，返回候选数。 */
+  function collectCandidates(index, searchRadius) {
+    const x = networkPositions[index * 3];
+    const y = networkPositions[index * 3 + 1];
+    const z = networkPositions[index * 3 + 2];
+    const limitSquared = searchRadius * searchRadius;
     let found = 0;
     const baseX = Math.floor(x / CELL) + 64;
     const baseY = Math.floor(y / CELL) + 64;
@@ -115,12 +142,12 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
           if (!bucket) continue;
           for (let b = 0; b < bucket.length; b += 1) {
             const j = bucket[b];
-            if (j === i) continue;
+            if (j === index) continue;
             const ddx = networkPositions[j * 3] - x;
             const ddy = networkPositions[j * 3 + 1] - y;
             const ddz = networkPositions[j * 3 + 2] - z;
             const distanceSquared = ddx * ddx + ddy * ddy + ddz * ddz;
-            if (distanceSquared > radius * radius) continue;
+            if (distanceSquared > limitSquared) continue;
             if (found === 8 && distanceSquared >= candidateDistance[7]) continue;
             // 插入到最近邻候选（最多 8 个）
             let slot = found < 8 ? found : 7;
@@ -136,6 +163,11 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
         }
       }
     }
+    return found;
+  }
+
+  for (let i = 0; i < count && pairStrengths.length < maxLinks; i += 1) {
+    const found = collectCandidates(i, radius);
 
     // 每个粒子优先连到最近的 1–2 个邻居，并保留少量随机性。
     let links = 0;
@@ -166,12 +198,34 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
     if (tryAddPair(a, b, 0.28 + random.next() * 0.22)) bridges += 1;
   }
 
+  // —— 增密层（tier=1）：冲突/再巩固等章节需要更密集的连接时整体显示 ——
+  // 与基础层共用同一个 LineSegments 与粒子索引，仅材质参数控制显隐，不重建几何。
+  const baseLinkCount = pairStrengths.length;
+  const extraTarget = Math.min(mobile ? 180 : 1200, Math.floor(baseLinkCount * 0.9));
+  const extraRadius = radius * 1.25;
+  let extraAttempts = 0;
+  const maxExtraAttempts = extraTarget * 4;
+  while (pairStrengths.length < baseLinkCount + extraTarget && extraAttempts < maxExtraAttempts) {
+    extraAttempts += 1;
+    const i = Math.floor(random.next() * count);
+    const found = collectCandidates(i, extraRadius);
+    let added = 0;
+    for (let c = 0; c < found && added < 2; c += 1) {
+      const j = candidateIndex[c];
+      const distance = Math.sqrt(candidateDistance[c]);
+      const strength = 0.22 + 0.5 * Math.max(0, 1 - distance / extraRadius);
+      if (tryAddPair(i, j, strength, 1)) added += 1;
+    }
+  }
+
   const linkCount = pairStrengths.length;
   const pairBuffer = new Int32Array(pairIndices);
   const linePositions = new Float32Array(linkCount * 6);
   const lineKinds = new Float32Array(linkCount * 2);
   const lineStrengths = new Float32Array(linkCount * 2);
   const linePhases = new Float32Array(linkCount * 2);
+  const lineTiers = new Float32Array(linkCount * 2);
+  const lineDecaySeeds = new Float32Array(linkCount * 2);
   const baseStrengths = new Float32Array(linkCount);
 
   for (let l = 0; l < linkCount; l += 1) {
@@ -194,6 +248,13 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
     lineStrengths[l * 2 + 1] = strength;
     linePhases[l * 2] = phase;
     linePhases[l * 2 + 1] = phase;
+    // aDecaySeed 决定该连接在遗忘阶段“先灰后消失”的先后顺序。
+    const tier = pairTiers[l] ?? 0;
+    const decaySeed = random.next();
+    lineTiers[l * 2] = tier;
+    lineTiers[l * 2 + 1] = tier;
+    lineDecaySeeds[l * 2] = decaySeed;
+    lineDecaySeeds[l * 2 + 1] = decaySeed;
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -203,6 +264,8 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
   const strengthAttribute = new THREE.BufferAttribute(lineStrengths, 1).setUsage(THREE.DynamicDrawUsage);
   geometry.setAttribute('aStrength', strengthAttribute);
   geometry.setAttribute('aPhase', new THREE.BufferAttribute(linePhases, 1));
+  geometry.setAttribute('aTier', new THREE.BufferAttribute(lineTiers, 1));
+  geometry.setAttribute('aDecaySeed', new THREE.BufferAttribute(lineDecaySeeds, 1));
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0.6), 4.2);
 
   const uniforms = {
@@ -211,8 +274,11 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
     uCoolBlend: { value: 0 },
     uTime: { value: 0 },
     uMotion: { value: 1 },
+    uDensity: { value: 1 },
+    uDecay: { value: 0 },
     uConceptColor: { value: new THREE.Vector3(SHADER_COLORS.concept[0], SHADER_COLORS.concept[1], SHADER_COLORS.concept[2]) },
     uEvidenceColor: { value: new THREE.Vector3(SHADER_COLORS.evidence[0], SHADER_COLORS.evidence[1], SHADER_COLORS.evidence[2]) },
+    uGrayColor: { value: new THREE.Vector3(0.5, 0.53, 0.58) },
   };
 
   const material = new THREE.ShaderMaterial({
@@ -249,8 +315,10 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
      * @param {number} width
      * @param {number} coolBlend
      * @param {number} elapsed
+     * @param {number} [density=1] 增密层显隐 0–1
+     * @param {number} [decay=0] 连线遗忘程度 0–1（先变灰再消失）
      */
-    update(particlePositions, opacity, width, coolBlend, elapsed) {
+    update(particlePositions, opacity, width, coolBlend, elapsed, density = 1, decay = 0) {
       for (let l = 0; l < linkCount; l += 1) {
         const i = pairBuffer[l * 2];
         const j = pairBuffer[l * 2 + 1];
@@ -284,6 +352,8 @@ export function createConnections({ THREE, count, layouts, resources, mobile }) 
       uniforms.uWidth.value = width;
       uniforms.uCoolBlend.value = coolBlend;
       uniforms.uTime.value = elapsed;
+      uniforms.uDensity.value = density;
+      uniforms.uDecay.value = decay;
       material.linewidth = width >= 1.25 ? 1.5 : 1;
     },
   };
