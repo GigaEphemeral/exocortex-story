@@ -150,6 +150,43 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
   });
   scene.add(connections.object);
 
+  // —— 世界层淡出（终幕只剩数字大脑）——
+  // 人物在 human.js 内按 worldFade 处理；书桌/书/电脑在这里统一处理。
+  // 着色器材质（书页文字、电脑屏幕内部数据）由各自的 glow/power 参数控制，跳过 opacity。
+  const worldFadeGroups = [desk.group, book.group, computer.group];
+  /** @type {{ material: any, baseOpacity: number }[]} */
+  const worldFadeMaterials = [];
+  const seenFadeMaterials = new Set();
+  for (const group of worldFadeGroups) {
+    group.traverse((object) => {
+      const material = object.material;
+      if (!material) return;
+      const list = Array.isArray(material) ? material : [material];
+      for (const item of list) {
+        if (seenFadeMaterials.has(item)) continue;
+        seenFadeMaterials.add(item);
+        if (item.isShaderMaterial) continue;
+        const baseOpacity = typeof item.opacity === 'number' ? item.opacity : 1;
+        // 进入透明队列后 opacity 才生效；depthWrite 保持默认，遮挡关系不变。
+        item.transparent = true;
+        worldFadeMaterials.push({ material: item, baseOpacity });
+      }
+    });
+  }
+
+  /** @param {number} fade 1 = 正常可见，0 = 完全退场 */
+  function applyWorldFade(fade) {
+    const clamped = fade < 0 ? 0 : fade > 1 ? 1 : fade;
+    const visible = clamped > 0.004;
+    for (let index = 0; index < worldFadeGroups.length; index += 1) {
+      worldFadeGroups[index].visible = visible;
+    }
+    for (let index = 0; index < worldFadeMaterials.length; index += 1) {
+      const entry = worldFadeMaterials[index];
+      entry.material.opacity = entry.baseOpacity * clamped;
+    }
+  }
+
   // —— 逐帧插值目标（预分配，applyFrame 只改数值） ——
   const values = {
     warmLight: DEFAULT_VALUES.warmLight,
@@ -167,6 +204,7 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     screenPower: DEFAULT_VALUES.screenPower,
     screenDetail: DEFAULT_VALUES.screenDetail,
     brainGlow: DEFAULT_VALUES.brainGlow,
+    worldFade: DEFAULT_VALUES.worldFade,
   };
 
   let cssWidth = 1;
@@ -255,6 +293,7 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     values.screenPower = interpolate(from, to, 'screenPower', t, DEFAULT_VALUES.screenPower);
     values.screenDetail = interpolate(from, to, 'screenDetail', t, DEFAULT_VALUES.screenDetail);
     values.brainGlow = interpolate(from, to, 'brainGlow', t, DEFAULT_VALUES.brainGlow);
+    values.worldFade = interpolate(from, to, 'worldFade', t, DEFAULT_VALUES.worldFade);
 
     const layoutFrom = typeof from.layout === 'string' ? from.layout : DEFAULT_VALUES.layout;
     const layoutTo = typeof to.layout === 'string' ? to.layout : DEFAULT_VALUES.layout;
@@ -294,9 +333,10 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
     // —— 环境与各领域对象 ——
     scene.fog.density = values.fogDensity;
     lighting.update(values, elapsed, reduced);
-    human.update(elapsed, values.humanFade, reduced);
+    human.update(elapsed, values.humanFade, reduced, values.worldFade);
     book.update(values.bookGlow, values.pageGlow, elapsed, reduced);
     computer.update(values.screenPower, values.screenDetail, elapsed, reduced);
+    applyWorldFade(values.worldFade);
     particles.update(layoutFrom, layoutTo, t, values, elapsed);
     connections.update(particles.positions, values.linkOpacity, values.linkWidth, values.coolBlend, elapsed);
     brainHalo.update(values.brainGlow, values.coolBlend, elapsed, reduced, camera);
@@ -335,6 +375,7 @@ export function createScene({ canvas, profile, reducedMotion, onContextLost }) {
       geometries: renderer.info.memory.geometries,
       textures: renderer.info.memory.textures,
       drawCalls: renderer.info.render.calls,
+      worldFade: values.worldFade,
       threeSource,
     };
   }

@@ -42,16 +42,20 @@ const VERTEX_SHADER = `
     vKind = aKind;
     vSeed = aSeed;
 
-    float worldSize = 0.0112 * uSize * (0.6 + aSeed * 0.8);
-    gl_PointSize = clamp(worldSize * uViewportScale * uPixelRatio / max(0.35, -mvPosition.z), 1.0, 72.0);
+    // 终幕大脑：表层高亮粒子略微放大，形成更清晰的电子点轮廓（uBrainGlow 由章节状态驱动）。
+    float brainSize = 1.0 + uBrainGlow * (0.04 + 0.3 * aIntensity);
+    float worldSize = 0.0112 * uSize * (0.6 + aSeed * 0.8) * brainSize;
+    gl_PointSize = clamp(worldSize * uViewportScale * uPixelRatio / max(0.35, -mvPosition.z), 1.0, 96.0);
   }
 `;
 
 const FRAGMENT_SHADER = `
   uniform float uCoolBlend;
   uniform float uIntensity;
+  uniform float uBrainGlow;
   uniform vec3 uConceptColor;
   uniform vec3 uEvidenceColor;
+  uniform vec3 uIceColor;
 
   varying float vAlpha;
   varying float vKind;
@@ -70,6 +74,8 @@ const FRAGMENT_SHADER = `
     // coolBlend 让整体色温由暖转冷，但两类差异仍然保留。
     color = mix(color, uConceptColor * 1.12, uCoolBlend * (1.0 - vKind) * 0.55);
     color = mix(color, uConceptColor * 1.2, uCoolBlend * vKind * 0.22);
+    // 终幕：高亮表层向冰蓝/冷白偏移，与暗部形成更强的轮廓对比。
+    color = mix(color, uIceColor, clamp(vAlpha, 0.0, 1.0) * uCoolBlend * uBrainGlow * 0.55);
     color += core * 0.5;
 
     float alpha = vAlpha * uIntensity * edge;
@@ -115,6 +121,7 @@ export function createParticles({ THREE, count, layouts, resources, reducedMotio
     uMotion: { value: reducedMotion ? 0 : 1 },
     uConceptColor: { value: new THREE.Vector3(SHADER_COLORS.concept[0], SHADER_COLORS.concept[1], SHADER_COLORS.concept[2]) },
     uEvidenceColor: { value: new THREE.Vector3(SHADER_COLORS.evidence[0], SHADER_COLORS.evidence[1], SHADER_COLORS.evidence[2]) },
+    uIceColor: { value: new THREE.Vector3(SHADER_COLORS.ice[0], SHADER_COLORS.ice[1], SHADER_COLORS.ice[2]) },
   };
 
   const material = new THREE.ShaderMaterial({

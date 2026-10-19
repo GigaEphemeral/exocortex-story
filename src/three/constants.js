@@ -144,6 +144,7 @@ export const DEFAULT_VALUES = Object.freeze({
   screenPower: 0.08,
   screenDetail: 0,
   brainGlow: 0,
+  worldFade: 1,
 });
 
 /**
@@ -162,7 +163,7 @@ export const LAYOUT_PARTICLE_SIZE = Object.freeze({
   archive: 0.95,
   networkWide: 1.4,
   brainSeed: 1.2,
-  brain: 0.78,
+  brain: 0.82,
 });
 
 /** 需要逐帧插值并作用到场景的数值字段（layout 单独处理）。 */
@@ -182,4 +183,5 @@ export const SCALAR_KEYS = Object.freeze([
   'screenPower',
   'screenDetail',
   'brainGlow',
+  'worldFade',
 ]);

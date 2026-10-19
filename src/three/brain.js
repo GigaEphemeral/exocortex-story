@@ -49,17 +49,18 @@ export function writeBrainLayout(target, count) {
     let intensity = 1;
     let kind = 1;
 
-    if (roll < 0.84) {
+    if (roll < 0.87) {
       // —— 大脑半球：左右各一个椭球体，中线处自然形成纵裂 ——
       const side = random.next() < 0.5 ? -1 : 1;
-      const shell = random.next() < 0.82;
+      // 提高表层粒子占比：轮廓更亮、内部更暗，脑形在终幕更清晰。
+      const shell = random.next() < 0.9;
       const phi = Math.acos(random.next() * 2 - 1);
       const theta = random.next() * Math.PI * 2;
       const dx = Math.sin(phi) * Math.cos(theta);
       const dy = Math.cos(phi);
       const dz = Math.sin(phi) * Math.sin(theta);
       const fold = cortexFold(phi, theta);
-      const shellRadius = shell ? 0.965 + random.next() * 0.06 : 0.4 + random.next() * 0.5;
+      const shellRadius = shell ? 0.98 + random.next() * 0.07 : 0.34 + random.next() * 0.48;
       const radius = shellRadius * (1 + fold);
 
       // 每个半球：中心 x=±0.30，半轴 (0.40, 0.575, 0.80)
@@ -91,8 +92,9 @@ export function writeBrainLayout(target, count) {
       // 底部压平，避免变成完整椭球；同时略向下补足颞叶底部，减少“心形”缺口。
       if (y < -0.38) y = -0.38 + (y + 0.38) * 0.32;
 
-      intensity = shell ? 0.45 + random.next() * 0.35 : 0.24 + random.next() * 0.22;
-      if (random.next() < 0.02) intensity = 0.95;
+      // 表面明显更亮、内部明显更暗：加法混合下轮廓不会被内部亮点糊掉。
+      intensity = shell ? 0.68 + random.next() * 0.2 : 0.12 + random.next() * 0.14;
+      if (random.next() < 0.03) intensity = 1;
       kind = random.next() < 0.055 ? 0 : 1;
     } else if (roll < 0.94) {
       // —— 小脑：后下方左右两个带皱褶的小叶 ——
@@ -107,7 +109,7 @@ export function writeBrainLayout(target, count) {
       x = side * (0.2 + 0.155 * cdx * cr);
       y = -0.44 + 0.125 * cdy * cr * crease;
       z = -0.56 + 0.185 * cdz * cr * crease;
-      intensity = 0.4 + random.next() * 0.25;
+      intensity = 0.52 + random.next() * 0.26;
       kind = random.next() < 0.08 ? 0 : 1;
     } else {
       // —— 脑干：向下收窄的稀疏粒子柱 ——
@@ -117,7 +119,7 @@ export function writeBrainLayout(target, count) {
       x = Math.cos(angle) * taper * 0.9;
       y = -0.4 - t * 0.26;
       z = -0.3 - t * 0.1 + Math.sin(angle) * taper * 0.3;
-      intensity = 0.3 + random.next() * 0.2;
+      intensity = 0.4 + random.next() * 0.22;
       kind = 1;
     }
 

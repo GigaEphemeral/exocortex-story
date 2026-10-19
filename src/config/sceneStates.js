@@ -29,6 +29,8 @@ export const sceneStateKeys = Object.freeze([
   'screenPower',
   'screenDetail',
   'brainGlow',
+  // 终幕整体淡出：1 = 人物/书桌/书籍/电脑正常可见；0 = 世界层完全退场，只剩数字大脑。
+  'worldFade',
 ]);
 
 /** @typedef {typeof sceneStates[keyof typeof sceneStates]} SceneState */
@@ -50,6 +52,7 @@ const base = Object.freeze({
   screenPower: 0.1,
   screenDetail: 0,
   brainGlow: 0,
+  worldFade: 1,
 });
 
 /** @param {Partial<typeof base>} overrides */
@@ -92,11 +95,11 @@ export const sceneStates = Object.freeze({
   archive: state({ layout: 'archive', warmLight: 0.6, coolLight: 1.4, ambient: 0.32, fogDensity: 0.036, coolBlend: 0.52, particleIntensity: 0.8, particleSize: 0.95, linkOpacity: 0.36, screenPower: 0.7, screenDetail: 0.6, humanFade: 0.7 }),
 
   /** 运镜 C：完整知识网络。 */
-  networkWide: state({ layout: 'networkWide', warmLight: 0.5, coolLight: 1.5, ambient: 0.38, fogDensity: 0.038, coolBlend: 0.7, particleIntensity: 1.05, particleSize: 1, linkOpacity: 0.6, screenPower: 0.6, screenDetail: 0.5, humanFade: 0.62 }),
+  networkWide: state({ layout: 'networkWide', warmLight: 0.5, coolLight: 1.5, ambient: 0.38, fogDensity: 0.038, coolBlend: 0.7, particleIntensity: 1.05, particleSize: 1, linkOpacity: 0.6, screenPower: 0.6, screenDetail: 0.5, humanFade: 0.62, worldFade: 0.96 }),
 
-  /** 运镜 D：网络开始向脑形轮廓收拢，建立视觉预期。 */
-  brainSeed: state({ layout: 'brainSeed', warmLight: 0.45, coolLight: 1.7, ambient: 0.4, fogDensity: 0.04, coolBlend: 0.82, particleIntensity: 1.15, particleSize: 1.05, linkOpacity: 0.55, screenPower: 0.5, screenDetail: 0.4, humanFade: 0.55, brainGlow: 0.5 }),
+  /** 运镜 D：网络开始向脑形轮廓收拢，世界层同步减淡，为终幕让位。 */
+  brainSeed: state({ layout: 'brainSeed', warmLight: 0.35, coolLight: 1.7, ambient: 0.28, fogDensity: 0.04, coolBlend: 0.82, particleIntensity: 1.28, particleSize: 1.15, linkOpacity: 0.5, screenPower: 0.35, screenDetail: 0.3, humanFade: 0.5, brainGlow: 0.55, worldFade: 0.5 }),
 
-  /** 阶段 9：数字大脑。 */
-  brain: state({ layout: 'brain', warmLight: 0.3, coolLight: 2.4, ambient: 0.34, fogDensity: 0.042, coolBlend: 1, particleIntensity: 1.55, particleSize: 1.2, linkOpacity: 0.3, linkWidth: 0.9, screenPower: 0.25, screenDetail: 0.2, humanFade: 0.32, brainGlow: 1 }),
+  /** 阶段 9：数字大脑。世界层完全退场（worldFade=0），灯光压暗，只剩高密度电子点大脑。 */
+  brain: state({ layout: 'brain', warmLight: 0.08, coolLight: 0.2, ambient: 0.05, fogDensity: 0.03, coolBlend: 1, particleIntensity: 1.68, particleSize: 1.16, linkOpacity: 0.32, linkWidth: 0.85, humanFade: 0.1, bookGlow: 0, pageGlow: 0, screenPower: 0, screenDetail: 0, brainGlow: 1.15, worldFade: 0 }),
 });

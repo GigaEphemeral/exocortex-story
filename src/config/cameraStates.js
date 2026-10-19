@@ -40,5 +40,5 @@ export const cameraStates = Object.freeze({
   conflictView: camera(1.5, 1.85, 2.7, 0.15, 1.15, 0.6, 39),
   networkWide: camera(2.6, 2.5, 5.0, 0.1, 1.2, 0.7, 45),
   brainView: camera(2.2, 2.3, 5.2, 0, 1.5, 0.8, 42),
-  brainFinal: camera(0.6, 1.9, 4.6, 0, 1.55, 0.85, 40),
+  brainFinal: camera(0.25, 1.78, 3.7, 0, 1.55, 0.88, 37),
 });

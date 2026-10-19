@@ -161,10 +161,11 @@ export function createHuman({ THREE, resources }) {
     group,
     /**
      * @param {number} elapsed
-     * @param {number} fade 1 = 完全可见，0 = 完全融入背景
+     * @param {number} fade 1 = 完全可见，0 = 完全融入背景（叙事层面的弱化）
      * @param {boolean} reducedMotion
+     * @param {number} [worldFade=1] 终幕整体淡出系数：0 = 连同背景一起消失
      */
-    update(elapsed, fade, reducedMotion) {
+    update(elapsed, fade, reducedMotion, worldFade = 1) {
       const motion = reducedMotion ? 0 : 1;
       const breath = Math.sin(elapsed * 1.55) * motion;
       const sway = Math.sin(elapsed * 0.31) * motion;
@@ -179,6 +180,7 @@ export function createHuman({ THREE, resources }) {
 
       // humanFade：颜色向深色背景过渡，人物留在原位，不会突然消失。
       const clampedFade = fade < 0 ? 0 : fade > 1 ? 1 : fade;
+      const clampedWorld = worldFade < 0 ? 0 : worldFade > 1 ? 1 : worldFade;
       const dim = 1 - clampedFade;
       for (let i = 0; i < fadeEntries.length; i += 1) {
         const entry = fadeEntries[i];
@@ -187,8 +189,8 @@ export function createHuman({ THREE, resources }) {
           entry.g + (backgroundG - entry.g) * dim,
           entry.b + (backgroundB - entry.b) * dim
         );
-        // brain 阶段人物变成淡淡的剪影，不会在黑背景里挡住数字大脑。
-        entry.material.opacity = 0.05 + clampedFade * 0.95;
+        // 终幕 worldFade → 0 时人物完全退场，只留数字大脑。
+        entry.material.opacity = (0.05 + clampedFade * 0.95) * clampedWorld;
       }
     },
   };
