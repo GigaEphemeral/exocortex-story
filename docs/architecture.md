@@ -49,6 +49,9 @@ idle → reading → reading → encoding → clusters → concepts → concepts
 - `chapterIndex`：当前内容单元，**唯一真值**，决定右侧显示哪张卡片。
 - `chapterProgress`（0–1）：当前单元从 `sceneFrom` 到 `sceneTo` 的插值进度。
 - 已停留状态 = `(chapterIndex, progress=1)`，画面是该单元的 `sceneTo`。
+- **运镜单元是纯转场**：4 个 `camera` 单元不展示任何文字说明；其 progress 到达 1 后，
+  主循环立即请求同方向下一步，自动顺序播放到相邻研究阶段（反向同样自动回退穿过运镜单元）。
+  HUD 编号与 `storyProgress` 仍按全部 14 个单元计算，不因自动衔接而改变。
 
 **正向推进**：先把 `chapterIndex` 设为 next，再让 progress 从 0 → 1。
 因为 `sceneFrom(next) === sceneTo(current)`，第一帧与上一状态完全重合，不会跳变。
@@ -95,7 +98,8 @@ createChapterMachine({ chapters, reducedMotion }) => {
 createScrollController({ onStep, isBusy, canScrollCard, panelElement }) => { dispose() }
 // onStep(direction, source) => boolean：true 表示已接受一次章节切换
 // 规则：一次输入最多启动一次切换；过渡中忽略滚轮/触摸；单个待执行方向由状态机负责；
-//       滚轮累计阈值 + 方向翻转重置 + 过渡结束后的短暂尾部锁；卡片可滚动时滚轮优先给卡片。
+//       滚轮累计阈值 + 方向翻转重置 + 过渡结束后的短暂尾部锁；卡片可滚动时滚轮优先给卡片；
+//       卡片到达文字底部/顶部后，再累计约一格滚轮（100px 冗余）才切换章节。
 
 // capabilities.js
 isWebGLAvailable(), detectProfile(), prefersReducedMotion(), onReducedMotionChange(cb)
@@ -194,9 +198,11 @@ UI 必须实现（需求 3、4、6、8 章）：
   → 关键差异（常驻）→ 学科标签词云（折叠）→ 论文列表（折叠）→ 待研究问题（常驻）。
 - 词云 ≤8 个关键词、3 个字号层级（1 / 2 / 5）；移动端改为 3 个标签 + “更多关键词”。
 - 论文 `verifiedUrl === null` 时只渲染纯文本，**不生成 `<a>`**。
-- 卡片内部独立滚动：`#panel-scroll` 可滚，滚轮/触摸在卡片仍有滚动空间时优先卡片。
+- 卡片内部独立滚动：`#panel-scroll` 可滚，滚轮/触摸在卡片仍有滚动空间时优先卡片；
+  到达文字底部/顶部后需要再继续滚动一点（100px 冗余）才触发章节切换。
 - 下方提示按需求 4.4：首章 / 中间 / 末章、桌面与移动端文案不同，轻微动画、不闪烁。
-- 运镜章节：显示“视觉过渡”标签 + `visualNote`，不新增学术卡片。
+- 运镜章节：**不展示任何文字说明**（HUD 标题、描述、`visualNote` 全部隐藏），
+  只播放运镜；主循环自动衔接下一章，不新增学术卡片。
 - 导航：上一章/下一章按钮、14 个章节点（点击 `onJump(index)`），支持键盘焦点。
 - 2D 降级：静态示意图（内联 SVG）+ 全部研究卡片 + 进度 + 导航，无 WebGL 依赖。
 - 可访问性：语义结构、`aria-live` 适度使用、对比度足够、`prefers-reduced-motion` 下
@@ -208,7 +214,8 @@ UI 必须实现（需求 3、4、6、8 章）：
 1. 先做能力检测与降级判断，**之后**才动态 `import('./three/createScene.js')`（Three.js 在被
    import 时加载）。WebGL 不可用或动态 import 失败 → `mountFallback`，页面不得空白。
 2. 创建场景 → 创建 UI → 创建状态机/滚动控制器 → 启动单一 rAF 主循环。
-3. 每帧：`machine.tick(dt)` → 取 state → 解析 from/to/camera → `scene.applyFrame` →
+3. 每帧：`machine.tick(dt)` → 取 state → 若停留在 `camera` 单元则按进入方向自动
+   `requestStep(±1)`（运镜不停留）→ 解析 from/to/camera → `scene.applyFrame` →
    `scene.render()` → `ui.setProgress`；只有章节变化才 `ui.showChapter`。
 4. 窗口尺寸、可见性、失焦：重置输入累计与时间步长，状态机不得失控。
 5. 性能：连续 3 秒低于目标 FPS 的 80% 触发**一次** `scene.degrade()`，之后不再回升。
