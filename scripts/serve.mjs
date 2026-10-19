@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 /**
  * 零依赖静态文件服务器：仅用于本地预览（非构建工具）。
- * 用法：npm start [-- --port 5173]
+ *
+ * 用法（以下写法都支持，默认 5173）：
+ *   npm start
+ *   npm start -- --port 5555
+ *   npm start --port 5555      # npm 会告警并作为位置参数传入，本脚本兼容
+ *   node scripts/serve.mjs 5555
  */
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
@@ -10,7 +15,27 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const PORT = Number(process.argv.find((arg) => arg.startsWith('--port='))?.slice(7) ?? 5173);
+const DEFAULT_PORT = 5173;
+
+/** 解析端口：--port=5555 / --port 5555 / -p 5555 / 位置参数 5555。 */
+function parsePort(argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    let value = null;
+    if (arg.startsWith('--port=')) value = arg.slice('--port='.length);
+    else if (arg === '--port' || arg === '-p') value = argv[index + 1];
+    else if (/^\d+$/.test(arg)) value = arg;
+    if (value == null) continue;
+
+    const port = Number(value);
+    if (Number.isInteger(port) && port > 0 && port < 65536) return port;
+    console.error(`端口参数无效：${value}（应为 1–65535 的整数）`);
+    process.exit(1);
+  }
+  return DEFAULT_PORT;
+}
+
+const PORT = parsePort(process.argv.slice(2));
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -62,6 +87,15 @@ const server = createServer(async (req, res) => {
   } catch {
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('404 Not Found');
   }
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`端口 ${PORT} 已被占用。`);
+    console.error('换个端口重试：npm start -- --port 5555（或 npm start --port=5555）');
+    process.exit(1);
+  }
+  throw error;
 });
 
 server.listen(PORT, '127.0.0.1', () => {

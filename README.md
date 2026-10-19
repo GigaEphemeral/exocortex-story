@@ -16,8 +16,13 @@
 需要 Node.js ≥ 18（仅用于本地静态服务器与校验脚本）。
 
 ```bash
-npm start            # 启动本地预览：http://127.0.0.1:5173/
+npm start                    # 启动本地预览：http://127.0.0.1:5173/
+npm start -- --port 5555     # 指定端口（npm 官方推荐写法）
+npm start --port 5555        # 也兼容这种写法（npm 会提示参数告警，但端口生效）
+node scripts/serve.mjs 5555  # 直接调用脚本
 ```
+
+端口被占用时会给出明确提示并退出，不会抛未捕获异常。
 
 首次离线使用时可把固定版本的 Three.js 下载到 `vendor/`（已加入 .gitignore，不提交）：
 
