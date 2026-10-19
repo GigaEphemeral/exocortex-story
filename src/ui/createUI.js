@@ -14,12 +14,7 @@
  * - 界面不自行判断状态机：上一章/下一章只调用 onStep(-1 / 1)，章节点只调用 onJump(index)。
  */
 
-import {
-  findResearchData,
-  pad2,
-  renderResearchCard,
-  renderVisualNote,
-} from './renderResearchCard.js';
+import { findResearchData, pad2, renderResearchCard } from './renderResearchCard.js';
 
 const MOBILE_QUERY = '(max-width: 860px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
@@ -271,7 +266,8 @@ export function createUI({
     // 顶部 HUD：类别 + 编号（按全部 14 个内容单元计算）+ 标题
     if (els.stageType) els.stageType.textContent = `${kindLabel} ·`;
     if (els.stageIndex) els.stageIndex.textContent = `${pad2(nextIndex + 1)} / ${pad2(total)}`;
-    if (els.stageCaption) els.stageCaption.textContent = unit.title || '';
+    // 视觉过渡单元不展示文字说明（只播放运镜，由主循环自动衔接下一章）。
+    if (els.stageCaption) els.stageCaption.textContent = isCamera ? '' : unit.title || '';
     if (els.hudStage) els.hudStage.setAttribute('aria-label', `${kindLabel} ${pad2(nextIndex + 1)} / ${pad2(total)}`);
 
     if (els.app) {
@@ -295,18 +291,15 @@ export function createUI({
       );
     }
 
-    // 右侧内容：研究卡片或运镜说明（二者互斥）
+    // 右侧内容：研究阶段显示卡片；视觉过渡单元隐藏全部文字说明。
     if (isCamera) {
       if (els.researchCard) {
         els.researchCard.hidden = true;
         els.researchCard.replaceChildren();
       }
       if (els.visualNote) {
-        els.visualNote.hidden = false;
-        els.visualNote.replaceChildren(
-          renderVisualNote({ chapter: unit, index: nextIndex, total }),
-        );
-        animateCardIn(els.visualNote);
+        els.visualNote.hidden = true;
+        els.visualNote.replaceChildren();
       }
     } else {
       const data = findResearchData(research, unit.researchId ?? unit.stage);

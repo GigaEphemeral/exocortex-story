@@ -176,7 +176,25 @@ async function boot() {
   let lastTime = 0;
   let elapsed = 0;
   let renderedIndex = -1;
+  let arrivalDirection = 1;
   let firstFrame = true;
+
+  /**
+   * 视觉过渡章节（type === 'camera'）不停留：
+   * 播放完自己的运镜后立即自动衔接下一章，正反向都生效。
+   */
+  function passThroughCameraChapter() {
+    const state = machine.getState();
+    if (state.isTransitioning) return state;
+    const unit = chapters[state.chapterIndex];
+    if (!unit || unit.type !== 'camera') return state;
+
+    const direction = arrivalDirection === -1 ? -1 : 1;
+    const target = state.chapterIndex + direction;
+    if (target < 0 || target >= chapters.length) return state;
+    if (!machine.requestStep(direction)) return state;
+    return machine.getState();
+  }
 
   function drawFrame(now) {
     if (document.hidden) {
@@ -188,7 +206,21 @@ async function boot() {
     elapsed += delta;
     machine.tick(delta);
 
-    const state = machine.getState();
+    let state = machine.getState();
+
+    // 先记录进入当前单元的方向（用于判断运镜章节应向前还是向后自动衔接）。
+    if (state.chapterIndex !== renderedIndex && renderedIndex >= 0) {
+      arrivalDirection = state.chapterIndex > renderedIndex ? 1 : -1;
+    }
+
+    // 运镜章节播放完不停留：直接顺序播放到相邻章节。
+    if (!state.isTransitioning) {
+      state = passThroughCameraChapter();
+      if (state.chapterIndex !== renderedIndex && renderedIndex >= 0) {
+        arrivalDirection = state.chapterIndex > renderedIndex ? 1 : -1;
+      }
+    }
+
     if (state.chapterIndex !== renderedIndex) {
       renderedIndex = state.chapterIndex;
       ui.showChapter(state.chapterIndex);
