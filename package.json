@@ -1,0 +1,17 @@
+{
+  "name": "human-memory-to-digital-brain",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "滚动驱动的连续 3D 叙事单页：从人类阅读与记忆，到 AI 外置知识库与数字大脑。",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs",
+    "vendor": "node scripts/vendor-three.mjs",
+    "validate": "node scripts/validate.mjs",
+    "test": "node scripts/validate.mjs && node scripts/test-machine.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

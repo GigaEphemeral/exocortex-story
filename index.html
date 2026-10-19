@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#05080f" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305080f'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%236cc6f5' stroke-width='2.2' opacity='0.85'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23a8dcff'/%3E%3Cpath d='M32 13v9M32 42v9M13 32h9M42 32h9' stroke='%236cc6f5' stroke-width='2' stroke-linecap='round' opacity='0.7'/%3E%3C/svg%3E"
+    />
+    <meta
+      name="description"
+      content="从人类记忆到数字大脑：以滚动驱动的连续 3D 叙事，比较人脑知识体系与 AI 外置知识库的功能类比与机制差异。"
+    />
+    <title>从人类记忆到数字大脑 · 人脑知识体系与 AI 外置知识库</title>
+    <link rel="stylesheet" href="./src/styles/main.css" />
+    <style>
+      /* 首屏防白闪：仅保留最小关键样式，其余交给 main.css */
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #05080f;
+        color: #e7eef7;
+      }
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        gap: 1rem;
+        background: radial-gradient(circle at 50% 45%, #0b1626 0%, #05080f 70%);
+        font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        z-index: 50;
+      }
+      .boot__mark {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        border: 1px solid rgba(120, 190, 255, 0.35);
+        border-top-color: rgba(160, 220, 255, 0.95);
+        animation: boot-spin 1.4s linear infinite;
+      }
+      .boot__text {
+        margin: 0;
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+        color: rgba(200, 222, 245, 0.72);
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#panel">跳到本章研究内容</a>
+
+    <div id="app" aria-busy="true">
+      <header id="hud" class="hud">
+        <div class="hud__brand">
+          <p class="hud__kicker">滚动驱动的连续 3D 叙事</p>
+          <h1 class="hud__title">从人类记忆到数字大脑</h1>
+          <p class="hud__subtitle">人脑知识体系 · AI 外置知识库 · 功能类比与机制差异</p>
+        </div>
+        <div class="hud__meta">
+          <p class="hud__stage">
+            <span id="stage-type" class="hud__stage-type">研究阶段</span>
+            <span id="stage-index" class="hud__stage-index">01 / 14</span>
+          </p>
+          <div
+            class="progress"
+            role="progressbar"
+            aria-label="整体叙事进度"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="progress-fill" class="progress__fill"></div>
+          </div>
+          <p id="stage-caption" class="hud__caption">阅读与信息感知</p>
+        </div>
+      </header>
+
+      <main class="viewport">
+        <section id="stage" class="stage" aria-label="三维叙事场景">
+          <canvas id="scene-canvas" class="stage__canvas"></canvas>
+          <div class="stage__vignette" aria-hidden="true"></div>
+          <div id="stage-badge" class="stage__badge" hidden>视觉过渡</div>
+          <div id="fallback-2d" class="fallback" hidden></div>
+          <p class="stage__footnote">视觉为概念表达，不代表 AI 已复现人脑记忆机制</p>
+        </section>
+
+        <aside id="panel" class="panel" aria-label="本章研究内容">
+          <div id="panel-scroll" class="panel__scroll" tabindex="0">
+            <article id="research-card" class="card" hidden></article>
+            <div id="visual-note" class="visual-note" hidden></div>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="chrome">
+        <nav id="nav" class="nav" aria-label="章节导航">
+          <button id="btn-prev" class="nav__btn" type="button" aria-label="返回到上一章">← 上一章</button>
+          <div id="chapter-dots" class="nav__dots" role="group" aria-label="章节跳转"></div>
+          <button id="btn-next" class="nav__btn" type="button" aria-label="继续到下一章">下一章 →</button>
+        </nav>
+        <p id="scroll-hint" class="scroll-hint" aria-live="polite">
+          <span id="scroll-hint-arrow" class="scroll-hint__arrow" aria-hidden="true">↓</span>
+          <span id="scroll-hint-text">向下滚动，开始探索</span>
+        </p>
+      </footer>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <div id="boot" class="boot" role="status" aria-live="polite">
+      <div class="boot__mark" aria-hidden="true"></div>
+      <p id="boot-text" class="boot__text">正在初始化连续场景…</p>
+    </div>
+
+    <noscript>
+      <div class="noscript">
+        <h1>从人类记忆到数字大脑</h1>
+        <p>本页面需要启用 JavaScript 才能显示滚动驱动的叙事与交互。启用后请刷新页面。</p>
+      </div>
+    </noscript>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

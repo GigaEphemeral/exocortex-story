@@ -1,0 +1,18 @@
+# 依赖与工具缓存（不提交）
+node_modules/
+.tmp/
+.npm-cache/
+
+# 下载的第三方运行时（用 npm run vendor 重新生成）
+vendor/
+
+# 构建 / 产物 / 日志
+dist/
+coverage/
+*.log
+*.local
+
+# 编辑器与系统文件
+.DS_Store
+.idea/
+.vscode/
