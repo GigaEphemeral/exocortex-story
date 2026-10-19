@@ -70,8 +70,11 @@ idle → reading → reading → encoding → clusters → concepts → concepts
 - `chapters`：14 项，字段 `id / type / stage / title / description / sceneFrom / sceneTo /
   cameraFrom / cameraTo / duration / easing / researchId / visualNote / showResearchCard / scrollHint`。
 - `researchData`：10 项，字段 `stage / title / question / brain[] / ai[] / diff / tags[] /
-  papers[] / open`；每条 paper 为 `{ authors, year, title, venue, note, verifiedUrl }`，
+  papers[] / open[] / frontier[]`；每条 paper 为 `{ authors, year, title, venue, note, verifiedUrl }`，
   **`verifiedUrl` 必须为 null**，渲染层不得生成链接。
+  `open` 是待验证问题数组（首条为核心问题，其余优先工程实现难点）；`frontier` 是
+  `{ title, year, url, note }` 外部阅读链接，**仅限 https 的 arXiv 摘要页**，只代表研究方向，
+  不用于支撑卡片结论（用 `npm run check-links` 校验可访问性）。
 - `sceneStates`：键固定为 `sceneStateKeys`，全部扁平标量 + `layout` 字符串。
 - `cameraStates`：`{ position: [x,y,z], target: [x,y,z], fov }`（只读数组）。
 
