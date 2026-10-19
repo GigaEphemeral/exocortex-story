@@ -347,10 +347,56 @@ export function renderResearchCard({
   // 5. 论文列表（默认折叠）
   root.append(renderPapers(data.papers, expanded));
 
-  // 6. 当前待研究问题（常驻）
+  // 6. 当前待研究问题（常驻，支持多条工程难点）
   const openSection = el('section', 'rc-section rc-open');
   openSection.append(sectionTitle('当前待研究问题', 'open', '待验证问题'));
-  openSection.append(el('p', 'rc-open__text', data.open || '该阶段暂无待验证问题数据。'));
+  const openQuestions = normalizeStringList(data.open);
+  if (!openQuestions.length) {
+    openSection.append(el('p', 'rc-open__text', '该阶段暂无待验证问题数据。'));
+  } else {
+    const openList = el('ol', 'rc-open__list');
+    openQuestions.forEach((question) => openList.append(el('li', 'rc-open__item', question)));
+    openSection.append(openList);
+  }
+
+  // 6.1 前沿研究方向（外部阅读链接，用户要求补充；与论文列表不同，这里允许真实外链）
+  const frontierLinks = Array.isArray(data.frontier) ? data.frontier.filter(Boolean) : [];
+  if (frontierLinks.length) {
+    const frontier = el('div', 'rc-frontier');
+    const frontierTitle = el('h3', 'rc-frontier__title');
+    frontierTitle.append(el('span', 'rc-frontier__label', '前沿研究方向 · 外部阅读'));
+    frontier.append(frontierTitle);
+
+    const list = el('ul', 'rc-frontier__list');
+    for (const link of frontierLinks) {
+      const item = el('li', 'rc-frontier__item');
+      const safeUrl = safeExternalHref(link.url);
+      if (safeUrl) {
+        const anchor = document.createElement('a');
+        anchor.className = 'rc-frontier__link';
+        anchor.href = safeUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        anchor.textContent = link.title || safeUrl;
+        item.append(anchor);
+      } else {
+        item.append(el('span', 'rc-frontier__link', link.title || '链接待核验'));
+      }
+      if (link.year) item.append(el('span', 'rc-frontier__year', String(link.year)));
+      if (link.note) item.append(el('span', 'rc-frontier__note', link.note));
+      list.append(item);
+    }
+    frontier.append(list);
+    frontier.append(
+      el(
+        'p',
+        'rc-frontier__hint',
+        '以上为外部论文的进一步阅读入口（arXiv 摘要页），只代表研究方向，不构成本卡片结论的直接证据。',
+      ),
+    );
+    openSection.append(frontier);
+  }
+
   root.append(openSection);
 
   return root;

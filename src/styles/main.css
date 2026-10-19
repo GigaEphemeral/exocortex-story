@@ -899,6 +899,98 @@ svg {
   color: #e9f2fa;
 }
 
+.rc-open__list {
+  margin: 0.15rem 0 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.45rem;
+  color: #dfeaf4;
+}
+
+.rc-open__item {
+  font-size: 0.86rem;
+  line-height: 1.68;
+}
+
+.rc-open__item::marker {
+  color: rgba(140, 205, 255, 0.62);
+  font-size: 0.8em;
+}
+
+/* 前沿研究方向：外部阅读链接（与论文列表的纯文本题录区分） */
+.rc-frontier {
+  margin-top: 0.95rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(140, 180, 220, 0.14);
+}
+
+.rc-frontier__title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rc-frontier__label {
+  color: #a9c2d8;
+  letter-spacing: 0.04em;
+}
+
+.rc-frontier__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rc-frontier__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.rc-frontier__link {
+  color: #a9dcff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(120, 190, 255, 0.32);
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.rc-frontier__link:hover,
+.rc-frontier__link:focus-visible {
+  color: #d6f0ff;
+  border-color: rgba(160, 220, 255, 0.7);
+}
+
+.rc-frontier__year {
+  padding: 0.02rem 0.34rem;
+  border: 1px solid rgba(140, 180, 220, 0.2);
+  border-radius: 999px;
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  color: #93aec4;
+}
+
+.rc-frontier__note {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  color: #8599ad;
+}
+
+.rc-frontier__hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: #71889e;
+}
+
 /* --------------------------------------------------------------------------
    7. 运镜单元（视觉过渡）内容
    -------------------------------------------------------------------------- */
@@ -1724,6 +1816,18 @@ body.is-fallback .fallback {
   .rc-question,
   .rc-open__text {
     font-size: 0.92rem;
+  }
+
+  .rc-open__item {
+    font-size: 0.82rem;
+  }
+
+  .rc-frontier__item {
+    font-size: 0.76rem;
+  }
+
+  .rc-frontier__link {
+    overflow-wrap: anywhere;
   }
 
   /* 移动端词云：3 个标签 + “更多关键词” */
